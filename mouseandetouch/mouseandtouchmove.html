@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+			}
+			
+			li {
+				list-style: none;
+			}
+			
+			.wrapbox {
+				position: fixed;
+				height: 100%;
+				width: 100%;
+			}
+			
+			#zy_sliderbox {
+				height: 100%;
+				width: 100%;
+				margin: 0px auto;
+				overflow: hidden;
+				position: relative;
+				border: 1px solid #CCCCCC;
+			}
+			
+			#zy_sliderbox>.active {
+				height: 100%;
+				width: 100%;
+				position: absolute;
+				background: red;
+				left: 100%;
+				background-size: 100% 100%;
+				background-repeat: no-repeat;
+			}
+			
+			#zy_sliderbox>.active:nth-of-type(1) {
+				left: 0;
+			}
+			.active img {
+				height: 100%;
+				width: 100%;
+			}
+			
+			.slider_li_selected {
+				background: #FF0000;
+				border-color: #FFFFFF;
+				color: #FFFFFF;
+			}
+			
+			.slider_ul>li:hover {
+				background: pink;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="wrapbox">
+			<div id="zy_sliderbox">
+				<div class="active" style="background-image:url(phoneimg/1.jpg) ;">
+					第一页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/2.jpg) ;">
+					第二页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/3.jpg) ;">
+					第三页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/4.jpg) ;">
+					第四页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/5.jpg) ;">
+					第五页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/6.jpeg) ;">
+					第六页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/7.jpg) ;">
+					第七页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/8.jpg) ;">
+					第八页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/9.jpg) ;">
+					第九页的内容
+				</div>
+				<div class="active" style="background-image:url(phoneimg/10.jpg) ;">
+					第十页的内容
+				</div>
+			</div>
+		</div>
+	</body>
+	<script src="jquery-3.2.0.min.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+		var ddd = {
+			dom: "zy_sliderbox",
+			setTimed: 500,
+			menu: ["第一页", "第二页", "第三页", "第四页", "第五页", "第六页","第七页", "第八页", "第九页", "第十页"]
+		};
+
+		(function(window, document) {
+			var mom = function(c) {
+				this.config = { //默认属性--传入
+					dom: c.dom || '',
+					setTimed: c.setTimed || 1000
+				}
+				this.momDom = $("#" + this.config.dom);
+				this.mompages = this.momDom.find("div");
+				this.pageLen = this.mompages.length;
+				if(c.menu != false) {
+					if(c.menu) {
+						//console.log("c.menu is ok!");
+						if(c.menu.length != this.pageLen) {
+							console.error("listMenu is ERROR!!!");
+							return false;
+						} else {
+							this.menu = c.menu;
+						}
+					} else {
+						let arr = [];
+						for(let i = 0; i < this.pageLen; i++) {
+							arr.push((i + 1));
+						}
+						this.menu = arr;
+					}
+				} else {
+					this.menu = c.menu;
+				}
+				this.nowidx = 3; //当前的序号
+				this.nextidx = 0; //下一个序号
+				this.lastDatetime = 0; //记录开始时间
+				this.nowDatetime = 0; //记录再一次开始的时间
+
+				this.mouse = { //定义鼠标属性
+					x1: 0,
+					y1: 0,
+					x2: 0,
+					y2: 0,
+					ifMouseDown: false
+				};
+
+				this.addControll();
+				if(this.config.dom && this.config.dom !== "") {
+					if(("ontouchstart" in window) || window.DocumentTouch && document instanceof DocumentTouch) {
+						this.initMobile();
+					} else {
+						this.initKeydown();
+						this.initMousewheel();
+						this.init();
+					}
+				} else {
+					console.error('config.dom getn\'t');
+					return false;
+				}
+			};
+			mom.prototype = {
+				addControll: function() { //增加控制按钮和序号，以及其各个显示的参数匹配
+					let listDom = "列表代码";
+					let flagBtn = "上下左右按钮";
+					if(this.menu != false) {
+						this.addList(this.menu);
+					}
+				},
+				init: function() {
+					//console.log("this.init()----ok!");
+					this._slider(this.momDom, this.mompages.length); //调用方法，对页面进行控制
+				},
+				initMobile: function() {
+					this._touchSlider(this.momDom, this.mompages.length)
+				},
+				initKeydown: function() {
+					let self = this;
+					let pageslen = this.mompages.length;
+					//console.log("initKeydown---ok")
+					let fn_keydown = function(event) {
+						let e = event || window.event;
+						if(self._dateAbs()) {
+							//根据键盘key值进行控制页面切换
+							switch(e.keyCode) {
+								case 38:
+									e.preventDefault();
+									self.changeNowIdx(pageslen, "sub");
+									return self.doAnimate("bottom");
+									break;
+								case 40:
+									e.preventDefault();
+									self.changeNowIdx(pageslen, "sum");
+									return self.doAnimate("top");
+									break;
+								case 37:
+									e.preventDefault();
+									self.changeNowIdx(pageslen, "sub");
+									return self.doAnimate("right");
+									break;
+								case 39:
+									e.preventDefault();
+									self.changeNowIdx(pageslen, "sum");
+									return self.doAnimate("left");
+									break;
+								default:
+									break;
+							}
+						}
+					}
+					document.addEventListener("keydown", fn_keydown, false)
+				},
+				initMousewheel: function(event) {
+					let self = this;
+					let e = event || window.event;
+					let pageslen = this.mompages.length;
+					let scrollFunc = function(e) {
+						if(e.wheelDelta || e.detail) { //IE/Opera/Chrome
+							let mouseWheelNum = e.wheelDelta || e.detail;
+							if(self._dateAbs()) {
+								self.lastDatetime = self.nowDatetime;
+								//根据滚轮方向调用相应的切换
+								if(mouseWheelNum < 0) {
+									//console.log("top");
+									self.changeNowIdx(pageslen, "sum");
+									return self.doAnimate("top"); //是否会存在上面没做完下面运行的问题
+								} else {
+									//console.log("bottom");
+									self.changeNowIdx(pageslen, "sub");
+									return self.doAnimate("bottom");
+								}
+							}
+						}
+					};
+					/*IE注册事件*/
+					if(document.attachEvent) {
+						console.log("IE down!")
+						document.attachEvent('onmousewheel', scrollFunc);
+					};
+					/*Firefox注册事件*/
+					if(document.addEventListener) {
+						document.addEventListener('DOMMouseScroll', scrollFunc);
+					};
+					window.onmousewheel = document.onmousewheel = scrollFunc; //IE/Opera/Chrome
+				},
+				addList: function(arr) {
+					let self = this;
+					let ul = "<ul class='slider_ul'>";
+					for(let i in arr) {
+						ul += "<li>" + arr[i] + "</li>";
+					};
+					ul += "</ul>";
+					$("body").append(ul);
+					$(".slider_ul>li").css({
+						"height": "30px",
+						"width": "100%",
+						"border-bottom": "1px dashed #ff0000",
+						"font-size": "12px",
+						"line-height": "30px",
+						"text-align": "center",
+						"cursor": "pointer",
+						"transition": "all .2s linear",
+						"overflow":"hidden"
+					});
+					$(".slider_ul>li").last().css("border-bottom", "none");
+					$(".slider_ul").css({
+						"position": "fixed",
+						"top": "50%",
+						"right": "20px",
+						"background": "#FFFFFF",
+						"border": "1px solid #CCCCCC",
+						"width": "40px",
+						"border-radius":"3px",
+						"height": parseInt($(".slider_ul>li").css("height")) * arr.length+ arr.length+ "px",
+						"margin-top": (-1) * parseInt($(".slider_ul>li").css("height")) * arr.length * .5 + "px",
+						"z-index": arr.length + 1
+					});
+					$(".slider_ul>li").eq(this.nextidx).addClass("slider_li_selected").siblings("li").removeClass("slider_li_selected");
+
+					$(".slider_ul>li").click(function() {
+						let i = $(this).index();
+						if($(this).hasClass('slider_li_selected') && self.nextidx == i) {
+							return false;
+						};
+						$(this).addClass("slider_li_selected").siblings("li").removeClass("slider_li_selected");
+						clickChangeIdx(i);
+						self.doAnimate("top");
+					});
+					let clickChangeIdx = function(i) {
+						self.nextidx = i;
+						self.nowidx = i == 0 ? self.pageLen - 1 : i - 1;
+					};
+				},
+				_touchSlider: function(dom, pageslen) {
+					let self = this;
+					let fn_touchstart = function(event) {
+
+						if(self._dateAbs()) {
+							self.lastDatetime = self.nowDatetime;
+							var touch = event.targetTouches[0]; //touches数组对象获得屏幕上所有的touch，取第一个touch
+							//阻止滑动时候的默认事件
+							let e = event || window.event;
+							e.preventDefault();
+
+							//获取触摸时候的坐标，并保存到根部
+							self.mouse.x1 = touch.pageX;
+							self.mouse.y1 = touch.pageY;
+							self.mouse.ifMouseDown = true;
+						}
+					};
+					let fn_touchmove = function(event) {
+						//阻止滑动时候的默认事件
+						let e = event || window.event;
+						e.preventDefault();
+						//当屏幕有多个touch或者页面被缩放过，就不执行move操作
+						if(event.targetTouches.length > 1 || event.scale && event.scale !== 1) return;
+						var touch = event.targetTouches[0];
+						//获取触摸时候的坐标，并保存到根部
+						self.mouse.x2 = touch.pageX;
+						self.mouse.y2 = touch.pageY;
+						self.mouse.ifMouseDown = true;
+
+					};
+					let fn_touchend = function(event) {
+						let e = event || window.event;
+						e.preventDefault();
+						if(self.mouse.ifMouseDown) {
+							self.mouse.ifMouseDown = false;
+							self._flag(pageslen);
+						}
+					}
+					dom[0].addEventListener('touchstart', fn_touchstart, false);
+					dom[0].addEventListener('touchmove', fn_touchmove, false);
+					dom[0].addEventListener('touchend', fn_touchend, false);
+				},
+				_slider: function(dom, pageslen) {
+					//console.log("this._slider()----ok!");
+					let self = this; //this指向重新定位给一个变量，防止window默认事件对this的影响
+					let fn_mousedown = function(event) {
+						//根据时间戳判断当前动作有没有做完，没有做完return false
+						let nowTime = new Date;
+						self.nowDatetime = nowTime.getTime();
+						let _date = self.nowDatetime - self.lastDatetime;
+
+						if(_date > self.config.setTimed) {
+							self.lastDatetime = self.nowDatetime;
+							//console.log("this._slider().onmousedown----ok!")
+							let e = event || window.event;
+							e.preventDefault();
+							self.mouse.ifMouseDown = true;
+							self.mouse.x1 = e.screenX;
+							self.mouse.y1 = e.screenY;
+						}
+					};
+					let fn_mousemove = function(event) {
+						//console.log("this._slider().fn_mousemove----ok!")
+						let e = event || window.event;
+						e.preventDefault();
+					};
+					let fn_mouseup = function(event) {
+						//console.log("this._slider().onmouseup----ok!")
+						let e = event || window.event;
+						e.preventDefault();
+
+						if(self.mouse.ifMouseDown) {
+							self.mouse.ifMouseDown = false;
+							self.mouse.x2 = e.screenX;
+							self.mouse.y2 = e.screenY;
+							self._flag(pageslen);
+						}
+					};
+					dom[0].addEventListener("mousedown", fn_mousedown, false);
+					dom[0].addEventListener("mousemove", fn_mousemove, false);
+					dom[0].addEventListener("mouseup", fn_mouseup, false);
+				},
+				_flag: function(pageslen) {
+					let self = this;
+					let x_x = self.mouse.x2 - self.mouse.x1;
+					let y_y = self.mouse.y2 - self.mouse.y1;
+					let x_abs = Math.abs(self.mouse.x2 - self.mouse.x1);
+					let y_abs = Math.abs(self.mouse.y2 - self.mouse.y1);
+
+					if(x_abs > y_abs && x_x > 0 && x_abs > 10) {
+						self.changeNowIdx(pageslen, "sub");
+						return self.doAnimate("right");
+					} else if(x_abs > y_abs && x_x < 0 && x_abs > 10) {
+						self.changeNowIdx(pageslen, "sum");
+						return self.doAnimate("left");
+					} else if(x_abs < y_abs && y_y > 0 && y_abs > 10) {
+						self.changeNowIdx(pageslen, "sub");
+						return self.doAnimate("bottom");
+					} else if(x_abs < y_abs && y_y < 0 && y_abs > 10) {
+						self.changeNowIdx(pageslen, "sum");
+						return self.doAnimate("top");
+					}
+				},
+				_dateAbs: function() {
+					let self = this;
+					//根据时间戳判断当前动作有没有做完，没有做完return false
+					let nowTime = new Date;
+					self.nowDatetime = nowTime.getTime();
+					let _date = self.nowDatetime - self.lastDatetime;
+					if(_date > self.config.setTimed) {
+						self.lastDatetime = self.nowDatetime;
+						return true;
+					}
+				},
+				changeNowIdx: function(num, msg) {
+					this.nowidx = this.nextidx;
+					if(msg == "sum") {
+						if(this.nowidx < num - 1) {
+							this.nextidx = this.nowidx + 1;
+						} else {
+							this.nextidx = 0;
+						}
+					} else {
+						if(this.nowidx <= 0) {
+							this.nextidx = num - 1;
+						} else {
+							this.nextidx--;
+						}
+					};
+					//console.log("nowidx:" + this.nowidx + ",nextidx:" + this.nextidx)
+				},
+				doAnimate: function(flag) {
+					let self = this;
+					let i_ = this.nowidx;
+					let _i = this.nextidx;
+					let pages = this.mompages;
+					let len = this.mompages.length;
+					let _css = {};
+					let _animate = {
+						left: 0,
+						top: 0
+					};
+					let windowSize = {
+						x: parseInt(self.momDom.css("width")),
+						y: parseInt(self.momDom.css("height"))
+					};
+					let dom = this.momDom;
+					//根据方向定义新的div的位置
+					switch(flag) {
+						case "right":
+							_css = {
+								"left": -1 * windowSize.x + "px",
+								"top": 0,
+								"z-index": len
+							};
+							break;
+						case "left":
+							_css = {
+								"left": windowSize.x,
+								"top": 0,
+								"z-index": len
+							};
+							break;
+						case "top":
+							_css = {
+								"top": windowSize.y + "px",
+								"left": 0,
+								"z-index": len
+							};
+							break;
+						case "bottom":
+							_css = {
+								"top": -1 * windowSize.y + "px",
+								"left": 0,
+								"z-index": len
+							};
+							break;
+						default:
+							break;
+					};
+					//改div位置，并添加动作
+					pages.eq(i_).css({
+						"top": 0,
+						"left": 0,
+						"z-index": len - 1
+					});
+					pages.each(function() {
+						if($(this).css("z-index") == len - 1) {
+							$(this).css("z-index", len - 2);
+						}
+						$(this).css("z-index", $(this).css("z-index") - 1);
+					});
+					pages.eq(_i).css(_css).animate(_animate, self.config.setTimed,function(){
+						$(".slider_ul>li").eq(self.nextidx).addClass("slider_li_selected").siblings("li").removeClass("slider_li_selected");
+					});
+				}
+			};
+			window.$$ =  mom;
+		})(window, document);
+		var mm = new $$(ddd);
+	</script>
+</html>
