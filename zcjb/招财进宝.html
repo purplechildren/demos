@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+		<title></title>
+		<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+		}
+			.wrap{
+				width: 400px;
+				height: 650px;
+				/*background: #1E78E8;*/
+				margin: 0px auto;
+				overflow: hidden;
+				position: relative;
+				background-image: url(img/caishen_bg.jpg);
+				background-size: 100%;
+			}
+			.wrap>img{
+				position: absolute;
+				/*animation: zhuan 025s linear;*/
+			}
+			.jbp_img{
+				width: 400px;
+				height: 400px;
+				position: absolute;
+				left: 50%;
+				margin-left: -200px;
+				bottom: -10px;
+			}
+			.jbp_img > img{
+				height: 100%;
+				width:100%;
+			}
+		</style>
+		<script src="js/jquery-1.12.1.min.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<body>
+		<div class="wrap">
+			
+			<div class="jbp_img">
+				<img src="img/1.gif"/>
+			</div>
+		</div>
+	</body>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			t= setInterval("addimg()",50);
+			console.log()
+		})		
+		var imgW;
+		var imgH;
+		var imgL;
+		var imgT;
+		var speed= 0;
+		var idx=0;
+		function addimg(){
+			var i= Math.random();
+			imgW= imgH= i*50;			
+			var a= Math.random();
+			imgL= a* 400;	
+			var b= Math.random();
+			imgT= b* 500;
+			
+			var Image= '<img src="img/jinbi.png" />';
+			$(".wrap").append(Image);
+			$(".wrap>img").eq(idx).css({"width": imgW+"px",
+								"left": imgL+"px",
+//								"top":imgT+ "px",
+								"top":"-10px"
+								}).animate({
+//									width:"200px",
+//									opacity:0,
+									top:"460px",
+									left:"200px",
+									marginLeft:"-"+ imgW*0.5+ "px",
+									marginTop:"-"+ imgW*0.5+ "px"
+//									transform:"rotate(360deg)",
+								},5000*b);
+//								"linear"
+			$(".wrap>img").eq(idx).animate({opacity:0},10)
+			idx++;
+			console.log($(".wrap>img").length);
+		}
+	</script>
+</html>
